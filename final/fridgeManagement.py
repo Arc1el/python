@@ -115,7 +115,7 @@ def sortItem():
     sList.sort()  # sort 함으로써 유통기한만 정렬되어 담겨지게됨
 
     print("|  제품이름\t|      유통기한     |")
-    for i in range(1, len(sList)):
+    for i in range(len(sList)):
         for j in range(len(tempList)):
             fIndex = tempList[j].find(sList[i]) - 1
             if fIndex >= 0:
