@@ -1,0 +1,9 @@
+myFridge:100:8
+milk,20200101
+pizza,20200514
+cola,20200312
+chicken,20200425
+kimchi,20201224
+icecream,20200423
+bread,20200811
+juice,20201113
