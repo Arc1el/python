@@ -61,21 +61,16 @@ def storeItem():  # 데이터파일에 식품을 저장하는 함수
     storeData = str1 + "," + str2 + "\n"
     datafile = open("fridgeData.txt", "a")
     datafile.write(storeData)
-    fridgeNow += 1
     datafile.close()
-    answer = input("제품을 더 입력하시겠습니까? (y/n) : ")
-    if answer == "y":
-        return True
-    else:
-        return False
+    fridgeNow += 1
 
 
-def updateInfo(name, max, now):  # 식품을 저장하거나 변동점이있을때 파일의 맨첫줄의 냉장고 상태 업데이트하는 함수
+def updateInfo(name, max):  # 식품을 저장하거나 변동점이있을때 파일의 맨첫줄의 냉장고 상태 업데이트하는 함수
     infoData = []
     with open('fridgeData.txt', 'r') as datafile:
         infoData = datafile.readlines()
     with open('fridgeData.txt', 'w') as datafile:
-        datafile.write(name + ":" + str(max) + ":" + str(now) + "\n")  # 첫째줄에 냉장고상태를 새로 작성
+        datafile.write(name + ":" + str(max) + ":" + str(fridgeNow) + "\n")  # 첫째줄에 냉장고상태를 새로 작성
         datafile.writelines(infoData[:0] + infoData[1:])  # 기존의 냉장고상태를 제외한채 파일을 작성
     datafile.close()
 
@@ -97,7 +92,7 @@ def printItem():  # 냉장고의 식품들을 오래전에 넣은 순서대로 �
         item = iList[i].split(',')
         year = item[1][0:4]
         month = item[1][4:6]
-        day = item[1][7:9]
+        day = item[1][6:8]
         print("|  %5s\t|  %s년 %s월 %s일  |" % (item[0], year, month, day))
 
 
@@ -122,7 +117,7 @@ def sortItem():
                 item = tempList[j][0:fIndex]
                 year = tempList[j][fIndex + 1:][0:4]
                 month = tempList[j][fIndex + 1:][4:6]
-                day = tempList[j][fIndex + 1:][7:9]
+                day = tempList[j][fIndex + 1:][6:8]
                 print("|  %5s\t|  %s년 %s월 %s일  |" % (item, year, month, day))
 
 
@@ -135,17 +130,17 @@ def findItem(text):  # 상품명을 매개변수로 전달받아 찾는함수
     del fList[0]
 
     print("|  제품이름\t|      유통기한     |")
-    for i in range(6):
+    for i in range(len(fList)):
         fIndex = fList[i].find(text)  # text를 찾음. 성공한경우 0이상의 값을 리턴(인덱스)
         if fIndex >= 0:  # 찾은경우
             item = fList[i].split(',')
             year = item[1][0:4]
             month = item[1][4:6]
-            day = item[1][7:9]
+            day = item[1][6:8]
             print("|  %5s\t|  %s년 %s월 %s일  |" % (item[0], year, month, day))
 
 
-def delItem(text):  # 제품명을 매개변수로 전달받아 해당 인덱스의 배열을 삭제하는 함수
+def delItem(text, fName, fMax):  # 제품명을 매개변수로 전달받아 해당 인덱스의 배열을 삭제하는 함수
     global fridgeNow
     fList = []  # 데이터를 가져와 임시 복사
     datafile = open("fridgeData.txt", "r")
@@ -154,14 +149,24 @@ def delItem(text):  # 제품명을 매개변수로 전달받아 해당 인덱스
     datafile.close()
     del fList[0]
 
-    for i in range(6):
-        if fList[i].find(text) >= 0:  # 찾은경우
-            fridgeNow -= 1
-            with open('fridgeData.txt', 'r') as datafile:
-                infoData = datafile.readlines()
-            with open('fridgeData.txt', 'w') as datafile:  # 냉장고상태 업데이트랑 같은원리. 해당줄을 빼고 파일을 작성
-                datafile.writelines(infoData[:i + 1] + infoData[i + 2:])
-            datafile.close()
+    if fList[0].find(text) == 0: # 첫번째데이터와 일치
+        del fList[0]
+        fridgeNow -= 1
+    else: # 나머지 데이터와 일치
+        for i in range(len(fList)):
+            if fList[i].find(text) >= 0:  # 찾은경우
+                del fList[i]
+                fridgeNow -= 1
+                print("제품을 삭제하였습니다.")
+
+    infoData = []
+    with open('fridgeData.txt', 'r') as datafile:
+        infoData = datafile.readlines()
+    with open('fridgeData.txt', 'w') as datafile:
+        datafile.write(fName + ":" + str(fMax) + ":" + str(fridgeNow) + "\n")  # 첫째줄에 냉장고상태를 새로 작성
+        for i in range(len(fList)): # 삭제한부분을 빼고 다시만든 배열을 파일쓰기
+            datafile.write(fList[i] + "\n")
+    datafile.close()
 
 
 # 여기서부터 main
@@ -197,8 +202,8 @@ while 1:  # 메뉴를 선택하여 프로그램 동작시작
         if fridgeMax == fridgeNow:  # 냉장고가 가득 찬경우
             print("| 냉장고가 가득찼습니다.")
             break;
-        while storeItem():  # 더이상 추가를 원하지 않을때까지 무한반복
-            updateInfo(fridgeName, fridgeMax, fridgeNow)  # 냉장고 상태를 업데이트 (데이터파일의 첫줄을 갱신)
+        storeItem() # 제품 추가
+        updateInfo(fridgeName, fridgeMax)  # 냉장고 상태를 업데이트 (데이터파일의 첫줄을 갱신)
     elif select == 3:  # 냉장고의 제품들을 입력한 순서대로 출력 (데이터파일에 적혀있는순서)
         printItem()
     elif select == 4:  # 냉장고의 제품들을 유통기한 임박순서대로 출력 (데이터파일을 :구분자로 읽어 2번째 필드를 비교)
@@ -208,7 +213,7 @@ while 1:  # 메뉴를 선택하여 프로그램 동작시작
         findItem(findtext)
     elif select == 6:  # 등록했던 제품을 찾아 삭제
         findtext = input("| 삭제하고자 하는 상품을 입력하세요 : ")
-        delItem(findtext)
+        delItem(findtext, fridgeName, fridgeMax) #삭제하고 데이터파일 갱신
     else:  # 프로그램 종료 (1-6 제외 아무입력)
         print("프로그램을 종료합니다. 감사합니다.")
         break;
